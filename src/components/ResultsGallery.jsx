@@ -538,7 +538,7 @@ const styles = {
   },
   compareOverlayImg: {
     height: "100%",
-    objectFit: "cover",
+    objectFit: "fill",
     pointerEvents: "none",
     userSelect: "none"
   },

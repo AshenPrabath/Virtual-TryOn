@@ -218,8 +218,10 @@ export async function performVirtualTryOn(apiKey, userImageUri, clothImageUri, p
     const desc = garment.toLowerCase();
     const fullBodyKeywords = ["dress", "frock", "gown", "jumpsuit", "suit", "set", "robe", "kimono", "onesie"];
     const lowerBodyKeywords = ["pants", "trousers", "jeans", "skirt", "shorts", "leggings", "bottoms", "slacks", "chinos", "sweatpants"];
+    const longOuterwearKeywords = ["coat", "trench", "duster", "parka", "long cardigan", "overcoat", "raincoat", "cardigan"];
     if (fullBodyKeywords.some(kw => desc.includes(kw))) return "FULL_BODY";
     if (lowerBodyKeywords.some(kw => desc.includes(kw))) return "LOWER_BODY";
+    if (longOuterwearKeywords.some(kw => desc.includes(kw))) return "LONG_OUTERWEAR";
     return "UPPER_BODY"; // Default to upper body (jackets, hoodies, t-shirts, etc.)
   })();
   console.info(`[TryOn] Classified garment category: ${garmentCategory} for item description: "${garment}"`);
@@ -238,7 +240,8 @@ CRITICAL RULES (MUST NEVER VIOLATE):
 1. ZERO LAYERING/OVERLAYING: Do NOT layer the new jacket or top OVER the original top/sweater/collar. You MUST completely erase, replace, and remove the original upper-body clothing, original sleeves, original collars, original necklines, and fabrics from Image 1. The new garment from Image 2 must sit DIRECTLY on the person's skin or look like it is worn directly.
 2. PRESERVE LOWER-BODY CLOTHING: You MUST preserve the original trousers, pants, jeans, skirts, or shorts worn by the person in Image 1 EXACTLY as they are. Do NOT erase, modify, or shorten the original pants. The trousers must remain fully intact, at their original length, and styled exactly as in the original photo.
 3. GENERALIZED ARM & SLEEVE ERASURE MANDATE (CRITICAL): If the new garment is sleeveless, strapless, off-shoulder, short-sleeved, or has shorter sleeves than the original clothing in Image 1, you MUST completely erase the original sleeves from the shoulder joints all the way down to the hands. Do NOT leave original sleeves, buttons, cuffs, or fabric showing on the biceps, forearms, or wrists. You MUST dynamically paint and generate realistic bare skin and arms (shoulders, biceps, elbows, forearms, wrists, and hands) with matching skin tone, completely replacing the original sleeve length. The entire arm from the shoulder joint downwards must become bare skin.
-4. SLEEVELESS/STRAPLESS/OFF-SHOULDER BARE SKIN RULE: If the new upper-body garment is sleeveless, strapless, off-shoulder, low-cut, or halter-neck, and the original person in Image 1 is wearing a high-coverage top (like a long-sleeve sweater, a high-neck shirt, or a crewneck), you MUST completely erase the original sweater's sleeves, shoulders, and collar/neckline fabric. You MUST dynamically paint and generate realistic bare skin (shoulders, collarbones, neck, chest, and arms) matching the person's skin tone in place of the sweater. Under no circumstances should the original long sleeves or neckline remain visible underneath or stick out.`;
+4. SLEEVELESS/STRAPLESS/OFF-SHOULDER BARE SKIN RULE: If the new upper-body garment is sleeveless, strapless, off-shoulder, low-cut, or halter-neck, and the original person in Image 1 is wearing a high-coverage top (like a long-sleeve sweater, a high-neck shirt, or a crewneck), you MUST completely erase the original sweater's sleeves, shoulders, and collar/neckline fabric. You MUST dynamically paint and generate realistic bare skin (shoulders, collarbones, neck, chest, and arms) matching the person's skin tone in place of the sweater. Under no circumstances should the original long sleeves or neckline remain visible underneath or stick out.
+5. PERFECT SPATIAL ALIGNMENT & NO SCALE DRIFT (CRITICAL): The output image must have absolute pixel-for-pixel spatial alignment and 1:1 scale matching the original Image 1. Do NOT zoom in, scale up, or shift the person or background. The person's spatial coordinates, head height, and facial size must map EXACTLY to the original image so there is no scale drift or offset when overlaying the generated image over the original.`;
 
       categoryPrompts = `━━━ STEP 1 — ERASE ORIGINAL UPPER CLOTHING ━━━
 - Completely remove the original upper-body clothing (the original sweater, top, shirt, collar, neckline, and sleeves). Erase them fully.
@@ -255,7 +258,8 @@ CRITICAL RULES (MUST NEVER VIOLATE):
 CRITICAL RULES (MUST NEVER VIOLATE):
 1. REPLACE LOWER-BODY CLOTHING: You MUST completely erase, replace, and remove the original trousers, pants, jeans, skirts, or shorts from Image 1. 
 2. PRESERVE UPPER-BODY CLOTHING: You MUST preserve the original upper-body clothing (jacket, hoodie, sweater, shirt, collar) worn by the person in Image 1 EXACTLY as it is. Do NOT erase or alter the original top.
-3. DYNAMIC BARE LEG GENERATION: If the new garment is shorter than the original trousers (e.g. a short skirt or shorts), you MUST dynamically generate and paint realistic, anatomically correct bare legs (shins, ankles, feet) matching the person's skin tone in place of the trousers. Under no circumstances should the original trousers remain underneath.`;
+3. DYNAMIC BARE LEG GENERATION: If the new garment is shorter than the original trousers (e.g. a short skirt or shorts), you MUST dynamically generate and paint realistic, anatomically correct bare legs (shins, ankles, feet) matching the person's skin tone in place of the trousers. Under no circumstances should the original trousers remain underneath.
+4. PERFECT SPATIAL ALIGNMENT & NO SCALE DRIFT (CRITICAL): The output image must have absolute pixel-for-pixel spatial alignment and 1:1 scale matching the original Image 1. Do NOT zoom in, scale up, or shift the person or background. The person's spatial coordinates, head height, and facial size must map EXACTLY to the original image so there is no scale drift or offset when overlaying the generated image over the original.`;
 
       categoryPrompts = `━━━ STEP 1 — ERASE ORIGINAL LOWER CLOTHING ━━━
 - Completely remove the original pants/jeans/trousers/skirt. Erase them fully.
@@ -265,6 +269,25 @@ CRITICAL RULES (MUST NEVER VIOLATE):
 - Dress the person in the new item: ${garment}
 - If the new item is short or a skirt, paint realistic bare legs/skin matching the person's skin tone in place of the original long pants.
 - Ensure the new item fits naturally around the waist and hips.`;
+    } else if (garmentCategory === "LONG_OUTERWEAR") {
+      systemInstructionText = `You are a professional luxury fashion image synthesis AI specializing in long outerwear try-ons (coats, trench coats, parkas, dusters, long cardigans).
+CRITICAL RULES (MUST NEVER VIOLATE):
+1. ZERO LAYERING UNDERNEATH: Do NOT layer the new coat OVER the original top/sweater/collar. You MUST completely erase, replace, and remove the original upper-body clothing, original sleeves, original collars, original necklines, and fabrics from Image 1. The new coat from Image 2 must sit DIRECTLY on the person's skin or look like it is worn directly.
+2. LONG COAT HEMLINE & CONTINUOUS DRAPING: Long outerwear naturally extends below the waistline, hips, and thighs. You MUST let the new coat drape continuously down to its natural hemline (e.g., thigh-length, knee-length, or mid-calf) exactly as shown in Image 2. Under no circumstances should you truncate or cut the coat short at the waist.
+3. COAT OVER BOTTOMS LAYERING: The long coat must layer OVER the original trousers, pants, jeans, or skirt. It must cover the lower body garments completely from the waist down to its hemline. The original pants, jeans, or skirt must only be visible *below* the coat's hemline.
+4. GENERALIZED ARM & SLEEVE ERASURE MANDATE (CRITICAL): You MUST completely erase the original sleeves from the shoulder joints all the way down to the hands. The coat's sleeves must be the only sleeves visible; no original cuffs, buttons, or fabrics should stick out from the coat's cuffs or show underneath.
+5. PERFECT SPATIAL ALIGNMENT & NO SCALE DRIFT (CRITICAL): The output image must have absolute pixel-for-pixel spatial alignment and 1:1 scale matching the original Image 1. Do NOT zoom in, scale up, or shift the person or background. The person's spatial coordinates, head height, and facial size must map EXACTLY to the original image so there is no scale drift or offset when overlaying the generated image over the original.`;
+
+      categoryPrompts = `━━━ STEP 1 — ERASE ORIGINAL UPPER CLOTHING ━━━
+- Completely remove the original upper-body clothing (the original sweater, top, shirt, collar, neckline, and sleeves). Erase them fully.
+- Erase the original sleeves completely from the shoulder joints all the way down to the hands. Leave no buttons, cuffs, or fabrics on their arms.
+- Do NOT layer the new coat OVER the original top. The old top must be 100% gone.
+
+━━━ STEP 2 — APPLY THE LONG COAT OVER THE BOTTOMS ━━━
+- Dress the person in the new coat: ${garment}
+- Let the coat drape continuously down the torso, past the hips, and down to its natural long hemline (thigh-length, knee-length, or mid-calf) exactly as shown in Image 2. Do NOT cut the coat short at the waist!
+- The coat must layer OVER the original lower-body clothing (skirt, pants, jeans). The original skirt/pants must be completely covered by the coat from the waist down to the coat's hemline, and only show *below* the coat's bottom hem.
+- Ensure the coat's sleeves are the only sleeves visible, with clean cuffs at the wrists.`;
     } else {
       // FULL_BODY
       systemInstructionText = `You are a professional luxury fashion image synthesis AI specializing in full-body clothing try-ons (dresses, frocks, gowns, jumpsuits).
@@ -274,7 +297,8 @@ CRITICAL RULES (MUST NEVER VIOLATE):
 3. GENERALIZED ARM & SLEEVE ERASURE MANDATE (CRITICAL): If the new dress/gown is sleeveless, strapless, halter-neck, off-shoulder, short-sleeved, or has shorter sleeves than the original clothing in Image 1, you MUST completely erase the original sleeves from the shoulder joints all the way down to the hands. Do NOT leave any part of the original sleeves, buttons, cuffs, or fabric showing on the shoulders, biceps, forearms, or wrists. You MUST dynamically paint and generate realistic, anatomically correct bare skin and arms (shoulders, biceps, elbows, forearms, wrists, and hands) with matching skin tone, completely replacing the original sleeve length. The entire arm from the shoulder joint downwards must become beautiful, realistic bare skin.
 4. SLEEVELESS/STRAPLESS/OFF-SHOULDER BARE SKIN RULE: If the new dress/gown is sleeveless, strapless, off-shoulder, low-cut, or halter-neck, and the original person in Image 1 is wearing high-coverage clothing (such as a long-sleeve shirt/sweater, a high-neck top, or a crewneck), you MUST completely erase all original sleeve, shoulder, neck, and chest fabric. You MUST dynamically paint and generate realistic bare skin (shoulders, collarbones, neck, chest, and arms) matching the person's skin tone. Under no circumstances should the original long sleeves or neckline remain visible underneath or stick out from the new dress. The shoulders, arms, and chest MUST be rendered as bare skin.
 5. CORRECT DRESS DRAPING: The new dress/gown must drape continuously from the shoulders and torso down to its natural hemline (fully covering the hips, thighs, and legs), completely replacing all original clothing.
-6. DYNAMIC BARE SKIN: If the dress is short or medium length, show bare legs matching the user's skin tone. If it is a long gown, it should cover the lower body correctly down to the ankles/feet.`;
+6. DYNAMIC BARE SKIN: If the dress is short or medium length, show bare legs matching the user's skin tone. If it is a long gown, it should cover the lower body correctly down to the ankles/feet.
+7. PERFECT SPATIAL ALIGNMENT & NO SCALE DRIFT (CRITICAL): The output image must have absolute pixel-for-pixel spatial alignment and 1:1 scale matching the original Image 1. Do NOT zoom in, scale up, or shift the person or background. The person's spatial coordinates, head height, and facial size must map EXACTLY to the original image so there is no scale drift or offset when overlaying the generated image over the original.`;
 
       categoryPrompts = `━━━ STEP 1 — ERASE ALL ORIGINAL CLOTHING ━━━
 - Completely remove both the original upper-body clothing (shirts, sweaters, jackets, sleeves) and the original lower-body clothing (pants, jeans, trousers, skirts, shorts). Erase them fully.
@@ -304,8 +328,8 @@ ${categoryPrompts}
 - Hair: exact same hair color, style, and length
 - Skin tone: unchanged
 - Body position and pose: identical — same standing/sitting/angle
-- Camera framing: EXACT same crop, zoom, and composition — person in same position in frame
-- Background: pixel-accurate recreation of the same environment, same depth
+- Camera framing and 1:1 scale matching: EXACT same crop, scale, zoom, and composition. The person must be the exact same height and pixel size. Do NOT scale up or zoom in.
+- Background and alignment: pixel-accurate recreation of the same environment at the exact same spatial scale. When overlaying the output over Image 1, the person's eyes, nose, shoulders, and background details must align pixel-for-pixel with zero shift or scaling mismatch.
 - Lighting: same light direction, intensity, and shadows
 - Accessories: same glasses/jewellery/bag if present in Image 1
 
@@ -353,6 +377,18 @@ CRITICAL RULES (MUST NEVER VIOLATE):
 - Dress the person in the new item from Image 2: ${garment}
 - If the garment is short (skirt, shorts), show realistic bare legs/skin matching the person's skin tone.
 - Completing the Outfit: Since this is a lower-body item, you MUST pair it with a simple, complementary upper-body garment (such as a clean, minimalist white t-shirt, a premium black knit top, or a classic silk blouse) to complete a realistic, fashionable outfit.`;
+    } else if (garmentCategory === "LONG_OUTERWEAR") {
+      systemInstructionText = `You are a professional luxury fashion image synthesis AI specializing in long outerwear try-ons (coats, trench coats, parkas, dusters, long cardigans) in outdoor/editorial scenes.
+CRITICAL RULES (MUST NEVER VIOLATE):
+1. ERASURE OF OLD TOP: You must completely remove the original sweater/top and its sleeves/collars. Do not layer over it.
+2. LONG COAT DRAPING: The coat must drape continuously down to its natural long hemline (thigh-length, knee-length, or mid-calf). Do not truncate it at the waist.
+3. DYNAMIC OUTFIT COMPLETION: You MUST pair the coat with a stylish, complementary lower-body garment (such as tailored pants, dark jeans, or a skirt) and matching shoes to complete a realistic, fashionable outfit. The coat must layer OVER these bottoms, and the bottoms should be visible *below* the coat's hemline.`;
+
+      categoryPosePrompts = `━━━ STEP 2 — CLOTHING — LONG COAT + MATCHING BOTTOMS ━━━
+- Dress the person in the new coat from Image 2: ${garment}
+- Do NOT layer this over the original top. Erase the original top completely.
+- Let the coat drape continuously down to its natural long hemline (thigh-length or knee-length) exactly as shown in Image 2. Do NOT cut the coat short at the waist!
+- Completing the Outfit: Pair the coat with a stylish, complementary lower-body garment (such as clean dark jeans, tailored trousers, or a skirt) and premium shoes. The coat must layer OVER the bottoms, and the bottoms should be visible *below* the coat's bottom hem.`;
     } else {
       // FULL_BODY
       systemInstructionText = `You are a professional luxury fashion image synthesis AI specializing in full-body clothing try-ons (dresses, frocks, gowns, jumpsuits) in outdoor/editorial scenes.
